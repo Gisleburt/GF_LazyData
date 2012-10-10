@@ -6,7 +6,7 @@
 	 * @package LazyData
 	 */
 
-	class LazyData_Field {
+	class LazyData_FieldInfo {
 		
 		public $Field;
 		public $Type;

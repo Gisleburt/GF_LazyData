@@ -217,7 +217,7 @@
 			
 			$fields = $this->getFields();
 			foreach($fields as $field => $type) {
-				/* @var $type LazyData_Field */
+				/* @var $type LazyData_FieldInfo */
 				if('PRI' == $type->Key)
 					$this->_primaryKey = $field;
 				if(isset($this->_specialFields[$field]))
@@ -240,7 +240,7 @@
 				$statement->execute();
 				
 				// Use the describe to map a type to each field
-				while($info = $statement->fetchObject('LazyData_Field')) {
+				while($info = $statement->fetchObject('LazyData_FieldInfo')) {
 					if(array_key_exists($info->Field, self::$_fields[$className]) // If the db field is known, save the data type
 							|| isset($this->_specialFields[$info->Field])) {      // Special Fields are optional
 						self::$_fields[$className][$info->Field] = $info;
@@ -399,7 +399,7 @@
 		
 		/**
 		 * Returns the info for a given field
-		 * @param LazyData_Field $fieldName
+		 * @param LazyData_FieldInfo $fieldName
 		 */
 		public function getInfoForField($fieldName) {
 			if(isset(self::$_fields[$this->__class__][$fieldName]))
