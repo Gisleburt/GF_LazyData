@@ -6,9 +6,8 @@
 	 * @author Daniel Mason
 	 * @copyright DanielMason.com, 2012
 	 * @abstract
-	 * @version 0.1
+	 * @version 0.7
 	 * @package LazyData
-	 * @uses LazyData_Exception
 	 */
 	
 	abstract class LazyData_Abstract {

@@ -3,6 +3,8 @@
 	/**
 	 * Stores field information on table fields
 	 * @author Daniel Mason
+	 * @copyright DanielMason.com, 2012
+	 * @version 1.0
 	 * @package LazyData
 	 */
 

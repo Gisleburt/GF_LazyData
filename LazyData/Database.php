@@ -4,6 +4,8 @@
 	 * A simple way to grab a database handler without caring if it exists.
 	 * @author Daniel Mason
 	 * @copyright DanielMason.com, 2012
+	 * @version 1.0
+	 * @package LazyData
 	 */
 	class LazyData_Database {
 		
