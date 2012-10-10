@@ -487,7 +487,7 @@
 			$pdo = $manager->getPDO();
 			if(!$order)
 				$order = $manager->getOrder();
-			$statement = $pdo->prepare("SELECT * FROM {$manager->getTable()} WHERE $where ORDER BY $order LIMIT $offset,$count");
+			$statement = $pdo->prepare("SELECT {$manager->getFieldsString()} FROM {$manager->getTable()} WHERE $where ORDER BY $order LIMIT $offset,$count");
 			$statement->execute();
 			while($data = $statement->fetchObject(get_called_class())) {
 				if(!($data->_safeDelete && $row[$data->getSafeDeleteField()] > 0)) {
@@ -603,6 +603,10 @@
 		
 		public function getSafeDeleteField() {
 			return array_search('_safeDelete', $this->_specialFields);
+		}
+		
+		public function getFieldsString() {
+			return $this->_fieldsString;
 		}
 		
 	}
