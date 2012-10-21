@@ -11,7 +11,7 @@
 	class LazyData_Relationship {
 		
 		/**
-		 * The name of the class that will be loaded by this link
+		 * The name of the class that will be loaded by this relationship
 		 * @var string
 		 */
 		public $class;
@@ -42,6 +42,10 @@
 			$object = new $this->class();
 			$object->loadBy($this->fieldTo, $value);
 			return $object;
+		}
+		
+		public function loadMany($value) {
+			return call_user_func("$this->class::getDataBy", $this->fieldTo, $value);
 		}
 		
 	}

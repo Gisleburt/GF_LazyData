@@ -1,5 +1,7 @@
 <?php
 
+	
+
 	/**
 	 * Extend to Schema level abstract, then extend to tables
 	 * 
@@ -176,6 +178,9 @@
 			elseif(array_key_exists($field, $this->_relationships)) {
 				return $this->$field = $this->_relationships[$field]->load($this->{$this->_relationships[$field]->fieldFrom});
 			}
+			elseif(array_key_exists($field=rtrim($field,'s'), $this->_relationships)) {
+				return $this->$field = $this->_relationships[$field]->loadMany($this->{$this->_relationships[$field]->fieldFrom});
+			}
 		}
 		
 		
@@ -297,10 +302,8 @@
 		 * @param string $value
 		 */
 		public function loadBy($field, $value) {
-			$fields = $this->getFields();
-			if(array_key_exists($field, $fields)) {
+			if($this->checkField($field))
 				$this->loadWhere("$field = $value");
-			}
 		}
 		
 		/**
@@ -420,6 +423,18 @@
 		}
 		
 		/**
+		 * Checks to see if a given field matches ones associated with this object
+		 * @param string $field
+		 * @return bool
+		 */
+		public function checkField($field) {
+			$allowedFields = $this->getFields();
+			if(array_key_exists($field, $allowedFields))
+				return true;
+			return false;
+		}
+		
+		/**
 		 * Checks through a list of fields and returns the acceptable ones
 		 * @param array $fields
 		 * @return array $fields
@@ -482,8 +497,23 @@
 		 * @param string $order
 		 * @return array
 		 */
-		public static function getData($count = 1, $offset = 0, $order = null) {
+		public static function getData($order = null, $count = null, $offset = 0) {
 			return static::getDataWhere('1', $count, $offset, $order);
+		}
+		
+		/**
+		 * Gets an array LazyData objects based on the value of a given field
+		 * @param string $field
+		 * @param mixed $value
+		 * @param int $count
+		 * @param int $offset
+		 * @param string $order
+		 * @return array
+		 */
+		public static function getDataBy($field, $value, $order = null, $count = null, $offset = 0) {
+			$manager = new static();
+			if($manager->checkField($field))
+				return static::getDataWhere("$field = $value", $count, $offset, $order);
 		}
 		
 		/**
@@ -494,13 +524,21 @@
 		 * @param string $order
 		 * @return array
 		 */
-		public static function getDataWhere($where, $count = 1, $offset = 0, $order = null) {
+		public static function getDataWhere($where, $order = null, $count = null, $offset = 0) {
 			$datas = array();
 			$manager = new static();
 			$pdo = $manager->getPDO();
+			
+			// If we're only getting a few items
+			$limit = '';
+			if($count)
+				$limit = "LIMIT $offset,$count";
+			
+			// If we aren't changing the order get the default
 			if(!$order)
 				$order = $manager->getOrder();
-			$statement = $pdo->prepare("SELECT {$manager->getFieldsString()} FROM {$manager->getTable()} WHERE $where ORDER BY $order LIMIT $offset,$count");
+			
+			$statement = $pdo->prepare("SELECT {$manager->getFieldsString()} FROM {$manager->getTable()} WHERE $where ORDER BY $order $limit");
 			$statement->execute();
 			while($data = $statement->fetchObject(get_called_class())) {
 				if(!($data->_safeDelete && $row[$data->getSafeDeleteField()] > 0)) {
