@@ -52,6 +52,8 @@
 		 */
 		protected $_order;
 		
+		protected $_relationships = array();
+		
 		//
 		// Internal mechanisms
 		//
@@ -154,6 +156,9 @@
 			// Set the helper strings
 			$this->_setStrings();
 			
+			// Setup the relationships
+			$this->_prepareRelationships();
+			
 			// If it's not already been set, set the default order to PK
 			if(!$this->_order)
 				$this->_order = "$this->_primaryKey DESC";
@@ -162,6 +167,15 @@
 			if($id)
 				$this->load($id);
 			
+		}
+		
+		public function __get($field) {
+			if(isset($this->$field)) {
+				return $this->$field;
+			}
+			elseif(array_key_exists($field, $this->_relationships)) {
+				return $this->$field = $this->_relationships[$field]->load($this->{$this->_relationships[$field]->fieldFrom});
+			}
 		}
 		
 		
@@ -606,6 +620,16 @@
 		
 		public function getFieldsString() {
 			return $this->_fieldsString;
+		}
+		
+		/**
+		 * Prepare relationships
+		 */
+		protected function _prepareRelationships() {
+			foreach($this->_relationships as $key => $relationship) {
+				if(count($relationship) == 3)
+					$this->_relationships[$key] = new LazyData_Relationship($relationship);
+			}
 		}
 		
 	}

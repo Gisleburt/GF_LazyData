@@ -19,7 +19,7 @@
 		protected $publicMessage;
 		
 		/**
-		 * 
+		 * Create a new Exception
 		 * @param string $message What happened?
 		 * @param string $public What to tell the user?
 		 * @param Exception $previous What exception causes this one?
@@ -33,6 +33,10 @@
 			
 		}
 		
+		/**
+		 * Get the message to display to the user
+		 * @return string (Might be null if a message wasn't set)
+		 */
 		public function getPublicMessage() {
 			return $this->publicMessage;
 		}
