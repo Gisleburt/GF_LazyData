@@ -44,8 +44,13 @@
 			return $object;
 		}
 		
+		/**
+		 * Loads an array of the LazyData object based on the given value
+		 * @param mixed $value
+		 * @return LazyData_Abstract[]
+		 */
 		public function loadMany($value) {
 			return call_user_func("$this->class::getDataBy", $this->fieldTo, $value);
 		}
-		
+
 	}

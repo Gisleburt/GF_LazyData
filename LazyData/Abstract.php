@@ -290,10 +290,8 @@
 		 * @param int $id
 		 */
 		public function load($id) {
-
 			$id = (int)$id; // Quick cleanse			
 			$this->loadBy($this->_primaryKey, $id);
-
 		}
 		
 		/**
@@ -497,8 +495,8 @@
 		 * @param string $order
 		 * @return array
 		 */
-		public static function getData($order = null, $count = null, $offset = 0) {
-			return static::getDataWhere('1', $count, $offset, $order);
+		public static function getData($count = null, $offset = 0, $order = null) {
+			return static::getDataWhere('1', $count, $order, $offset);
 		}
 		
 		/**
@@ -510,7 +508,7 @@
 		 * @param string $order
 		 * @return array
 		 */
-		public static function getDataBy($field, $value, $order = null, $count = null, $offset = 0) {
+		public static function getDataBy($field, $value, $count = null, $offset = 0, $order = null) {
 			$manager = new static();
 			if($manager->checkField($field))
 				return static::getDataWhere("$field = $value", $count, $offset, $order);
@@ -524,7 +522,7 @@
 		 * @param string $order
 		 * @return array
 		 */
-		public static function getDataWhere($where, $order = null, $count = null, $offset = 0) {
+		public static function getDataWhere($where, $count = null, $offset = 0, $order = null) {
 			$datas = array();
 			$manager = new static();
 			$pdo = $manager->getPDO();
