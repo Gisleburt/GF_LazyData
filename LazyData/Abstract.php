@@ -146,8 +146,7 @@
 			
 			$this->__class__ = get_called_class();
 			
-			if(!isset(self::$_fields))
-				self::$_fields = array();
+			
 			
 			// Get a connection
 			$this->_getPDO();
@@ -219,24 +218,21 @@
 		 */
 		protected function _setFields() {
 			
-			$className = $this->__class__;
-			if(!isset(self::$_fields[$className])) {
-				self::$_fields[$className] = array();
 			
-				$fields = array_keys(get_object_vars($this));
-				foreach ($fields as $field) {
-					if(substr($field, 0, 1) != '_')
-						self::$_fields[$className][$field] = null;
-				}
+			if(!$this->fieldInfoInitialised()) {
+				$this->initFieldInfoStorage();
 				$this->_mapFields();
 			}
-			if(empty(self::$_fields[$className]))
+			
+			$fieldInfo = $this->getFieldInfo();
+			
+			if(empty($fieldInfo))
 				throw new LazyData_Exception("No fields were found in this LiteTable: $className", LazyData_Exception::MESSAGE_BADCODE);
 			
-			$fields = $this->getFields();
-			foreach($fields as $field => $type) {
+			
+			foreach($fieldInfo as $field => $info) {
 				/* @var $type LazyData_FieldInfo */
-				if('PRI' == $type->Key)
+				if('PRI' == $info->Key)
 					$this->_primaryKey = $field;
 				if(isset($this->_specialFields[$field]))
 					$this->{$this->_specialFields[$field]} = true;
@@ -251,7 +247,7 @@
 		 */
 		protected function _mapFields() {
 			
-			$className = $this->__class__;
+			$objectVars = get_object_vars($this);
 			
 			try {
 				$statement = $this->_pdo->prepare("DESCRIBE $this->_table");
@@ -259,14 +255,10 @@
 				
 				// Use the describe to map a type to each field
 				while($info = $statement->fetchObject('LazyData_FieldInfo')) {
-					if(array_key_exists($info->Field, self::$_fields[$className]) // If the db field is known, save the data type
+					if(array_key_exists($info->Field, $objectVars) // If the db field is known, save the data type
 							|| isset($this->_specialFields[$info->Field])) {      // Special Fields are optional
-						self::$_fields[$className][$info->Field] = $info;
+						$this->_saveFieldInfo($info->Field, $info);
 					}
-				}
-				foreach(self::$_fields[$className] as $field => $info) {
-					if(!$info)
-						unset(self::$_fields[$className][$field]);
 				}
 				
 			} catch (Exception $e) {
@@ -333,7 +325,7 @@
 			$values = $this->getValues();
 			$query = "INSERT INTO {$this->_table} ($this->_fieldsString) VALUES($this->_valuesString)";
 			$statement = $this->_pdo->prepare($query);
-			$fields = $this->getFields();
+			$fields = $this->getFieldInfo();
 			foreach($fields as $field => $type) {
 				$statement->bindParam($field, $this->$field);
 			}
@@ -349,7 +341,7 @@
 			$values = $this->getValues();
 			$query = "UPDATE {$this->_table} SET $this->_updateString WHERE $this->_primaryKey = ".(int)$this->getPrimaryKey();
 			$statement = $this->_pdo->prepare($query);
-			$fields = $this->getFields();
+			$fields = $this->getFieldInfo();
 			foreach($fields as $field => $type) {
 				$statement->bindParam($field, $this->$field);
 			}
@@ -389,36 +381,82 @@
 		 */
 		public function getValues($all = null) {
 			$values = array();
-			$fields = $this->getFields();
+			$fields = $this->getFieldInfo();
 			if($all) {
 				foreach($fields as $field => $type) {
 					$values[$field] = $this->$field;
 				}
 			}
 			else {
-				$allowedFields = $this->getFields();
+				$allowedFields = $this->getFieldInfo();
 				foreach($fields as $field => $type) {
 					if(in_array($field, $allowedFields))
 						$values[$field] = $this->$field;
 				}
 			}
 		}
+		
+		//
+		// The following methods should be overridden for improved storage
+		//
+		
+		/**
+		 * Has the field info for this table already been initialised
+		 * @return boolean
+		 */
+		protected function fieldInfoInitialised() {
+			return isset(self::$_fields) && isset(self::$_fields[$this->__class__]);
+		}
+		
+		/**
+		 * Sets up the storage for field info
+		 */
+		protected function initFieldInfoStorage() {
+			if(!isset(self::$_fields))
+				self::$_fields = array();
+			if(!isset(self::$_fields[$this->__class__]))
+				self::$_fields[$this->__class__] = array();
+		}
 
 		/**
 		 * Returns the fields in both the object and database
+		 * @return LazyData_FieldInfo[]
 		 */
-		public function getFields() {
-			return self::$_fields[$this->__class__];
+		public function getFieldInfo() {
+			return static::$_fields[$this->__class__];
 		}
 		
 		/**
 		 * Returns the info for a given field
-		 * @param LazyData_FieldInfo $fieldName
+		 * @param $fieldName string
+		 * @return LazyData_FieldInfo
 		 */
 		public function getInfoForField($fieldName) {
-			if(isset(self::$_fields[$this->__class__][$fieldName]))
-				return self::$_fields[$this->__class__][$fieldName];
+			if(array_key_exists($fieldName, static::$_fields[$this->__class__]))
+				return static::$_fields[$this->__class__][$fieldName];
 		}
+		
+		/**
+		 * Save the info for a specific field
+		 * @param string $fieldName
+		 * @param LazyData_FieldInfo $info
+		 */
+		protected function _saveFieldInfo($fieldName, LazyData_FieldInfo $info) {
+			static::$_fields[$this->__class__][$fieldName] = $info;
+		}
+
+		/**
+		 * Save all field info
+		 * @param array $fieldInfo
+		 */
+		protected function _saveFieldInfoArray(array $fieldInfo) {
+			foreach($fieldInfo as $fieldName => $info)
+				$this->_saveFieldInfo($fieldName, $info);
+		}
+		
+		//
+		// End of Field Info Methods
+		//
 		
 		/**
 		 * Checks to see if a given field matches ones associated with this object
@@ -426,7 +464,7 @@
 		 * @return bool
 		 */
 		public function checkField($field) {
-			$allowedFields = $this->getFields();
+			$allowedFields = $this->getFieldInfo();
 			if(array_key_exists($field, $allowedFields))
 				return true;
 			return false;
@@ -439,7 +477,7 @@
 		 */
 		public function checkFields(array $fields) {
 			$returnFields = array();
-			$allowedFields = $this->getFields();
+			$allowedFields = $this->getFieldInfo();
 			foreach($fields as $key => $field)
 				if(!in_array($field, $allowedFields))
 					unset($fields[$key]);
@@ -453,7 +491,7 @@
 			$this->_fieldsString = '';
 			$this->_valuesString = '';
 			$this->_updateString = '';
-			$fields = $this->getFields();
+			$fields = $this->getFieldInfo();
 			foreach($fields as $field => $type) {
 				$this->_fieldsString .= "$field, ";
 				$this->_valuesString .= ":$field, ";
@@ -663,8 +701,13 @@
 		 */
 		protected function _prepareRelationships() {
 			foreach($this->_relationships as $key => $relationship) {
-				if(count($relationship) == 3)
+				$count = count($relationship); 
+				if(3 == $count)
 					$this->_relationships[$key] = new LazyData_Relationship($relationship);
+				elseif(5 == $count)
+					$this->_relationships[$key] = new LazyData_ManyRelationship($relationship);
+				else
+					unset($relationship[$key]);
 			}
 		}
 		
