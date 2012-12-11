@@ -1,5 +1,7 @@
 <?php
 
+	namespace Gisleburt\LazyData;
+
 	/**
 	 * Links on LazyData object to another
 	 * @author Daniel Mason
@@ -7,8 +9,8 @@
 	 * @version 1.0
 	 * @package LazyData
 	 */
-
-	class LazyData_Relationship {
+	
+	class Relationship {
 		
 		/**
 		 * The name of the class that will be loaded by this relationship
@@ -20,23 +22,24 @@
 		 * The field name used for loading the class
 		 * @var string
 		 */
-		public $fieldFrom;
-		
-		/**
-		 * The field name used for loading the class
-		 * @var string
-		 */
 		public $fieldTo;
 		
-		public function __construct(array $config) {
+		/**
+		 * Database Object
+		 * @var PDO
+		 */
+		protected $_pdo;
+		
+		public function __construct(array $config, PDO $pdo = null) {
 			foreach($config as $field => $value)
 				$this->$field = $value;
+			$this->_pdo = $pdo;
 		}
 		
 		/**
 		 * Loads and returns the LazyData object
 		 * @param mixed $value
-		 * @return LazyData_Abstract
+		 * @return LazyData
 		 */
 		public function load($value) {
 			$object = new $this->class();
@@ -47,7 +50,7 @@
 		/**
 		 * Loads an array of the LazyData object based on the given value
 		 * @param mixed $value
-		 * @return LazyData_Abstract[]
+		 * @return LazyData[]
 		 */
 		public function loadMany($value) {
 			return call_user_func("$this->class::getDataBy", $this->fieldTo, $value);

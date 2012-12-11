@@ -1,5 +1,7 @@
 <?php
 
+	namespace Gisleburt\LazyData;
+	
 	/**
 	 * Minor extension of the Exception class that stores a second message for public display.
 	 * @author Daniel Mason
@@ -7,7 +9,8 @@
 	 * @version 1.0
 	 * @package LazyData
 	 */
-	class LazyData_Exception extends Exception {
+	
+	class Exception extends \Exception {
 		
 		const MESSAGE_BADCODE = 'Oh no! Found some bad code. The developers has been informed and we\'ll fix is as soon as possible';
 		const MESSAGE_DATABASE = 'Oh no! We\'ve experianced a problem connecting to our database. Hopefully this problem is temporary, but just in case, we\'ve let the developers know.';

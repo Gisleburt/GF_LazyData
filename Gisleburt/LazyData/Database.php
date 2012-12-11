@@ -1,5 +1,7 @@
 <?php
 
+	namespace Gisleburt\LazyData;
+
 	/**
 	 * A simple way to grab a database handler without caring if it exists.
 	 * @author Daniel Mason
@@ -7,7 +9,8 @@
 	 * @version 1.0
 	 * @package LazyData
 	 */
-	class LazyData_Database {
+	
+	class Database {
 		
 		/**
 		 * An array of PDO connections to mysql databases
@@ -33,7 +36,7 @@
 				$dsn = "mysql:host=$database";
 				if($schema)
 					$dsn.=";dbname=$schema";
-				self::$mysqlConnections[$database][$username] = new PDO($dsn, $username, $password, self::$options);
+				self::$mysqlConnections[$database][$username] = new \PDO($dsn, $username, $password, self::$options);
 			}
 			return self::$mysqlConnections[$database][$username];
 			

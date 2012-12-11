@@ -1,5 +1,7 @@
 <?php
 
+	namespace Gisleburt\LazyData;
+
 	/**
 	 * Stores field information on table fields
 	 * @author Daniel Mason
@@ -7,8 +9,8 @@
 	 * @version 1.0
 	 * @package LazyData
 	 */
-
-	class LazyData_FieldInfo {
+	
+	class FieldDescription {
 		
 		public $Field;
 		public $Type;

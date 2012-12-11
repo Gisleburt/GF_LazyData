@@ -1,6 +1,6 @@
 <?php
-
 	
+	namespace Gisleburt\LazyData;
 
 	/**
 	 * Extend to Schema level abstract, then extend to tables
@@ -12,7 +12,7 @@
 	 * @package LazyData
 	 */
 	
-	abstract class LazyData_Abstract {
+	abstract class LazyData {
 		
 		//
 		// Override these
@@ -54,7 +54,17 @@
 		 */
 		protected $_order;
 		
+		/**
+		 * An array of relationships to other LazyData classes
+		 * @var unknown_type
+		 */
 		protected $_relationships = array();
+		
+		/**
+		 * The name of the description manager class. Must implement DescriptionManager
+		 * @var string
+		 */
+		protected $_descriptionManagerClass;
 		
 		//
 		// Internal mechanisms
@@ -67,16 +77,16 @@
 		protected $_pdo;
 		
 		/**
+		 * The description manager oject
+		 * @var DescriptionManager
+		 */
+		protected $_descriptionManager;
+		
+		/**
 		 * The name of the instantiated class
 		 * @var string
 		 */
 		protected $__class__;
-		
-		/**
-		 * Field data for all LazyData objects
-		 * @var array
-		 */
-		static protected $_fields;
 		
 		/**
 		 * The primary key for this table
@@ -144,12 +154,17 @@
 		 */
 		public function __construct($id = null) {
 			
+			// Get a connection (do this first as until its done username and password are visible)
+			$this->_getPDO();
+			
 			$this->__class__ = get_called_class();
 			
-			
-			
-			// Get a connection
-			$this->_getPDO();
+			// Set up the description manager and confirm its interface
+			if(!isset($this->_descriptionManagerClass))
+				$this->_descriptionManagerClass = __NAMESPACE__.'\DescriptionManager_Static';
+			$this->_descriptionManager = new $this->_descriptionManagerClass($this->__class__);
+			if(!$this->_descriptionManager instanceof DescriptionManager)
+				throw new Exception('Description management object must be an instance of DescriptionManager');
 			
 			// Get field names
 			$this->_setFields();
@@ -171,27 +186,29 @@
 		}
 		
 		public function __get($field) {
-			if(isset($this->$field)) {
-				return $this->$field;
-			}
-			elseif(array_key_exists($field, $this->_relationships)) {
-				return $this->$field = $this->_relationships[$field]->load($this->{$this->_relationships[$field]->fieldFrom});
-			}
-			elseif(array_key_exists($field=rtrim($field,'s'), $this->_relationships)) {
-				return $this->$field = $this->_relationships[$field]->loadMany($this->{$this->_relationships[$field]->fieldFrom});
+			if($field[0] != '_') {
+				if(isset($this->$field)) {
+					return $this->$field;
+				}
+				elseif(array_key_exists($field, $this->_relationships)) {
+					return $this->$field = $this->_relationships[$field]->load($this->{$this->_relationships[$field]->fieldFrom});
+				}
+				elseif(array_key_exists($field=rtrim($field,'s'), $this->_relationships)) {
+					return $this->$field = $this->_relationships[$field]->loadMany($this->{$this->_relationships[$field]->fieldFrom});
+				}
 			}
 		}
 		
 		
 		/**
 		 * Tries to get a reference to a PDO object from the database manager
-		 * @uses LazyData_Database
-		 * @throws LazyData_Exception
+		 * @uses Database
+		 * @throws Exception
 		 */
 		protected function _getPDO() {
 			
 			// Get a reference to a database connection, to be used later
-			$this->_pdo = LazyData_Database::getMysqlConncetion(
+			$this->_pdo = Database::getMysqlConncetion(
 					$this->_host,
 					$this->_username,
 					$this->_password,
@@ -200,9 +217,9 @@
 			
 			// If we didn't get a connection something is wrong
 			if(!$this->_pdo) 
-				throw new LazyData_Exception(
+				throw new Exception(
 						'PDO connection could not be established',
-						LazyData_Exception::MESSAGE_DATABASE
+						Exception::MESSAGE_DATABASE
 					);
 			
 			// We don't need this data anymore, delete it so it never gets dumped to screens.
@@ -214,27 +231,28 @@
 		/**
 		 * Takes any class variables that don't begin with an underscore and stores
 		 * them for mapping to the database. Calls _mapFields();
-		 * @throws LazyData_Exception
+		 * @throws Exception
 		 */
 		protected function _setFields() {
 			
-			
-			if(!$this->fieldInfoInitialised()) {
-				$this->initFieldInfoStorage();
+			// Check the description manager knows about this class, if not tell it
+			if(!$this->_descriptionManager->isInitialised()) {
+				$this->_descriptionManager->initialise();
 				$this->_mapFields();
 			}
 			
-			$fieldInfo = $this->getFieldInfo();
+			// Validate the fields exist
+			$fieldInfo = $this->_descriptionManager->getTableDescription();
 			
 			if(empty($fieldInfo))
-				throw new LazyData_Exception("No fields were found in this LiteTable: $className", LazyData_Exception::MESSAGE_BADCODE);
+				throw new Exception("No fields were found in this LiteTable: $this->__class__", Exception::MESSAGE_BADCODE);
 			
-			
+			// Extract information about the table, whats its primary key, do we know of any special fields 
 			foreach($fieldInfo as $field => $info) {
-				/* @var $type LazyData_FieldInfo */
+				/* @var $type FieldDescription */
 				if('PRI' == $info->Key)
 					$this->_primaryKey = $field;
-				if(isset($this->_specialFields[$field]))
+				if(array_key_exists($field, $this->_specialFields))
 					$this->{$this->_specialFields[$field]} = true;
 			}
 			
@@ -243,7 +261,7 @@
 		
 		/**
 		 * Maps the class fields to database fields and maps their type 
-		 * @throws LazyData_Exception
+		 * @throws Exception
 		 */
 		protected function _mapFields() {
 			
@@ -254,15 +272,15 @@
 				$statement->execute();
 				
 				// Use the describe to map a type to each field
-				while($info = $statement->fetchObject('LazyData_FieldInfo')) {
-					if(array_key_exists($info->Field, $objectVars) // If the db field is known, save the data type
-							|| isset($this->_specialFields[$info->Field])) {      // Special Fields are optional
-						$this->_saveFieldInfo($info->Field, $info);
+				while($desc = $statement->fetchObject(__NAMESPACE__.'\FieldDescription')) {
+					if(array_key_exists($desc->Field, $objectVars) // If the db field is known, save the data type
+							|| array_key_exists($desc->Field, $this->_specialFields)) {      // Special Fields are optional
+						$this->_descriptionManager->saveFieldDescription($desc->Field, $desc);
 					}
 				}
 				
 			} catch (Exception $e) {
-				throw new LazyData_Exception("PDO couldn't describe $this->_schema.$this->_table", LazyData_Exception::MESSAGE_DATABASE, $e);
+				throw new Exception("PDO couldn't describe $this->_schema.$this->_table", Exception::MESSAGE_DATABASE, $e);
 			}
 			
 		}
@@ -271,8 +289,8 @@
 		 * Clears the data from this object. Does not clear fields beginning with _
 		 */
 		public function clearValues() {
-			$fields = array_keys(get_object_vars($this));
-			foreach ($fields as $field)
+			$fields = get_object_vars($this);
+			foreach ($fields as $field => $value)
 				if(substr($field, 0, 1) != '_')
 					$this->$field = null;
 		}
@@ -297,7 +315,8 @@
 		}
 		
 		/**
-		 * Loads a record with a given where
+		 * Loads a record with a given where.
+		 * WARNING: The contents of $where can not be validated here, SQL injection possible.
 		 * @param string $where
 		 * @param int $count Load this many
 		 * @param int $offset Skip this many
@@ -313,7 +332,7 @@
 			$query = "SELECT $this->_fieldsString FROM $this->_table WHERE $where ORDER BY $order LIMIT $offset,$count";
 			$statement = $this->_pdo->prepare($query);
 			$statement->execute();
-			if($row=$statement->fetch(PDO::FETCH_ASSOC))
+			if($row=$statement->fetch(\PDO::FETCH_ASSOC))
 				$this->setValues($row, false);
 		}
 		
@@ -325,7 +344,7 @@
 			$values = $this->getValues();
 			$query = "INSERT INTO {$this->_table} ($this->_fieldsString) VALUES($this->_valuesString)";
 			$statement = $this->_pdo->prepare($query);
-			$fields = $this->getFieldInfo();
+			$fields = $this->_descriptionManager->getTableDescription();
 			foreach($fields as $field => $type) {
 				$statement->bindParam($field, $this->$field);
 			}
@@ -341,7 +360,7 @@
 			$values = $this->getValues();
 			$query = "UPDATE {$this->_table} SET $this->_updateString WHERE $this->_primaryKey = ".(int)$this->getPrimaryKey();
 			$statement = $this->_pdo->prepare($query);
-			$fields = $this->getFieldInfo();
+			$fields = $this->_descriptionManager->getTableDescription();
 			foreach($fields as $field => $type) {
 				$statement->bindParam($field, $this->$field);
 			}
@@ -381,14 +400,14 @@
 		 */
 		public function getValues($all = null) {
 			$values = array();
-			$fields = $this->getFieldInfo();
+			$fields = $this->_descriptionManager->getTableDescription();
 			if($all) {
 				foreach($fields as $field => $type) {
 					$values[$field] = $this->$field;
 				}
 			}
 			else {
-				$allowedFields = $this->getFieldInfo();
+				$allowedFields = $this->_descriptionManager->getTableDescription();
 				foreach($fields as $field => $type) {
 					if(in_array($field, $allowedFields))
 						$values[$field] = $this->$field;
@@ -396,75 +415,13 @@
 			}
 		}
 		
-		//
-		// The following methods should be overridden for improved storage
-		//
-		
-		/**
-		 * Has the field info for this table already been initialised
-		 * @return boolean
-		 */
-		protected function fieldInfoInitialised() {
-			return isset(self::$_fields) && isset(self::$_fields[$this->__class__]);
-		}
-		
-		/**
-		 * Sets up the storage for field info
-		 */
-		protected function initFieldInfoStorage() {
-			if(!isset(self::$_fields))
-				self::$_fields = array();
-			if(!isset(self::$_fields[$this->__class__]))
-				self::$_fields[$this->__class__] = array();
-		}
-
-		/**
-		 * Returns the fields in both the object and database
-		 * @return LazyData_FieldInfo[]
-		 */
-		public function getFieldInfo() {
-			return static::$_fields[$this->__class__];
-		}
-		
-		/**
-		 * Returns the info for a given field
-		 * @param $fieldName string
-		 * @return LazyData_FieldInfo
-		 */
-		public function getInfoForField($fieldName) {
-			if(array_key_exists($fieldName, static::$_fields[$this->__class__]))
-				return static::$_fields[$this->__class__][$fieldName];
-		}
-		
-		/**
-		 * Save the info for a specific field
-		 * @param string $fieldName
-		 * @param LazyData_FieldInfo $info
-		 */
-		protected function _saveFieldInfo($fieldName, LazyData_FieldInfo $info) {
-			static::$_fields[$this->__class__][$fieldName] = $info;
-		}
-
-		/**
-		 * Save all field info
-		 * @param array $fieldInfo
-		 */
-		protected function _saveFieldInfoArray(array $fieldInfo) {
-			foreach($fieldInfo as $fieldName => $info)
-				$this->_saveFieldInfo($fieldName, $info);
-		}
-		
-		//
-		// End of Field Info Methods
-		//
-		
 		/**
 		 * Checks to see if a given field matches ones associated with this object
 		 * @param string $field
 		 * @return bool
 		 */
 		public function checkField($field) {
-			$allowedFields = $this->getFieldInfo();
+			$allowedFields = $this->_descriptionManager->getTableDescription();
 			if(array_key_exists($field, $allowedFields))
 				return true;
 			return false;
@@ -477,7 +434,7 @@
 		 */
 		public function checkFields(array $fields) {
 			$returnFields = array();
-			$allowedFields = $this->getFieldInfo();
+			$allowedFields = $this->_descriptionManager->getTableDescription();
 			foreach($fields as $key => $field)
 				if(!in_array($field, $allowedFields))
 					unset($fields[$key]);
@@ -491,7 +448,7 @@
 			$this->_fieldsString = '';
 			$this->_valuesString = '';
 			$this->_updateString = '';
-			$fields = $this->getFieldInfo();
+			$fields = $this->_descriptionManager->getTableDescription();
 			foreach($fields as $field => $type) {
 				$this->_fieldsString .= "$field, ";
 				$this->_valuesString .= ":$field, ";
@@ -548,12 +505,14 @@
 		 */
 		public static function getDataBy($field, $value, $count = null, $offset = 0, $order = null) {
 			$manager = new static();
+			// TODO: Make this function get the object without going to getDataWhere
 			if($manager->checkField($field))
 				return static::getDataWhere("$field = $value", $count, $offset, $order);
 		}
 		
 		/**
 		 * Get an array of LazyData objects with a WHERE statement
+		 * WARNING: The contents of $where can not be validated here, SQL injection possible.
 		 * @param string $where
 		 * @param int $count
 		 * @param int $offset
@@ -645,7 +604,7 @@
 		 * @param string $fieldName
 		 */
 		protected function _setFieldToNow($fieldName) {
-			if($info = $this->getInfoForField($fieldName)) {
+			if($info = $this->_descriptionManager->getFieldDescription($fieldName)) {
 				switch($info->Type) {
 			
 					case 'YEAR':
@@ -680,20 +639,48 @@
 			return $this->{$this->_primaryKey};
 		}
 		
+		public function getPrimaryKeyName() {
+			return $this->_primaryKey;
+		}
+		
+		/**
+		 * Returns the date created
+		 * @return  string
+		 */
 		public function getSafeCreateField() {
 			return array_search('_safeCreate', $this->_specialFields);
 		}
 		
+		/**
+		 * Returns the date last modified
+		 * @return  string
+		 */
 		public function getSafeModifyField() {
 			return array_search('_safeModify', $this->_specialFields);
 		}
 		
+		/**
+		 * Returns the date deleted
+		 * @return  string
+		 */
 		public function getSafeDeleteField() {
 			return array_search('_safeDelete', $this->_specialFields);
 		}
 		
+		/**
+		 * Returns the field sting used by PDO
+		 * @return string
+		 */
 		public function getFieldsString() {
 			return $this->_fieldsString;
+		}
+		
+		/**
+		 * Returns a description of the LazyData table
+		 * @return FieldDescription[]
+		 */
+		public function getTableDescription() {
+			return $this->_descriptionManager->getTableDescription();
 		}
 		
 		/**
@@ -703,11 +690,22 @@
 			foreach($this->_relationships as $key => $relationship) {
 				$count = count($relationship); 
 				if(3 == $count)
-					$this->_relationships[$key] = new LazyData_Relationship($relationship);
+					$this->_relationships[$key] = new Relationship($relationship);
 				elseif(5 == $count)
-					$this->_relationships[$key] = new LazyData_ManyRelationship($relationship);
+					$this->_relationships[$key] = new RelationshipLink($relationship, $this->_pdo);
 				else
 					unset($relationship[$key]);
+			}
+		}
+		
+		public function cleanField($fieldName) {
+			if(isset($this->$fieldName)) {
+				$desc = $this->_descriptionManager->getFieldDescription($fieldName);
+				if($desc instanceof FieldDescription) {
+					$this->$fieldName = $this->_pdo->quote($this->$fieldName, $desc->Type);
+					return;
+				}
+				$this->$fieldName = null;
 			}
 		}
 		
