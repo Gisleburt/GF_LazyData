@@ -346,7 +346,8 @@
 			$statement = $this->_pdo->prepare($query);
 			$fields = $this->_descriptionManager->getTableDescription();
 			foreach($fields as $field => $type) {
-				$statement->bindParam($field, $this->$field);
+				$value = $this->$field;
+				$statement->bindParam($field, $value);
 			}
 			$statement->execute();
 			$this->{$this->_primaryKey} = $this->_pdo->lastInsertId();
