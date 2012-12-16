@@ -5,9 +5,9 @@
 	// autoloader in wich case just replace this section.
 	//
 
-	$libraryDir = __DIR__.'/../../..';
-	require_once $globalConfig->dir['library'].'/Gisleburt/Tools/Autoloader.php';
-	\Gisleburt\Tools\Autoloader::$incDirs[] = $globalConfig->dir['library'];
+	$libraryDir = __DIR__.'/../..';
+	require_once $libraryDir.'/Tools/Autoloader.php';
+	\Gisleburt\Tools\Autoloader::$incDirs[] = $libraryDir;
 	spl_autoload_register('\Gisleburt\Tools\Autoloader::psr0');
 	
 	echo 'ok';
