@@ -43,7 +43,7 @@
 		}
 
         public static function mySqlTypeToPhpType($type) {
-            $simpleType = preg_replace('/[\(\[].*/', '', $type);
+            $simpleType = strtoupper(preg_replace('/[\(\[].*/', '', $type));
 
             switch($simpleType) {
 
