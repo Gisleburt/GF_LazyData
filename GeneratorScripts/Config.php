@@ -40,12 +40,44 @@
 		//
 		
 		/**
-		 * Where to save the files.
-		 * This is also used for the namespace so use backslash seperators 
+		 * Vendor (your) name, used for file save and namespace
 		 * @var string
 		 */
-		public $saveLocation;
-		
+		public $vendor;
+
+		/**
+		 * Package name, used for file save and namespace
+		 * @var string
+		 */
+		public $package;
+
+		/**
+		 * Any subdirectories, used for file save and namespace
+		 * @var string (single string in the form one/two)
+		 */
+		public $subDirectory;
+
+		/**
+		 * Created automatically if not set
+		 * @var string
+		 */
+		public $saveTo;
+
+		/**
+		 * Created automatically if not set
+		 * @var string
+		 */
+		public $namespace;
+
+		/**
+		 * This is the top level of your library folder
+		 * The files will be generated bellow here either in
+		 * vendor/package/subDirectory or wherever saveTo is set
+		 * @var string
+		 */
+		public $libraryLocation;
+
+
 		/**
 		 * Just makes sure the config looks ok.
 		 * @throws Exception
@@ -60,8 +92,21 @@
 				throw new Exception('Database password not set.');
 			if(!$this->dbSchema)
 				throw new Exception('Database schema not set.');
-			if(!$this->saveLocation)
-				throw new Exception('Save location not set.');
+			if(!$this->vendor)
+				throw new Exception('Vendor not set.');
+			if(!$this->package)
+				throw new Exception('Package not set.');
+
+			if(!$this->saveTo) {
+				$this->saveTo = "$this->vendor/$this->package";
+				if($this->subDirectory)
+					$this->saveTo .= "/$this->subDirectory";
+			}
+
+			if(!$this->namespace)
+				$this->namespace = str_replace('/', '\\', $this->saveTo);
+			$this->saveTo = "$this->libraryLocation/$this->saveTo";
+
 			return true;
 		}
 		

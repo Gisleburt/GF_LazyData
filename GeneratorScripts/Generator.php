@@ -25,17 +25,17 @@
 		 */
 		protected $_tables;
 
-        /**
-         * Field information
-         * @var stdClass[]
-         */
-        protected $_fields;
+		/**
+		 * Field information
+		 * @var stdClass[]
+		 */
+		protected $_fields;
 		
 		public function __construct(Config $config) {
 			$this->config = $config;
 			$this->config->checkConfig();
 			$this->tables = array();
-            $this->_fields = array();
+			$this->_fields = array();
 		}
 		
 		/**
@@ -81,16 +81,54 @@
 			}
 
 			foreach($describes as $table => $describe) {
-                $name = ucwords(str_replace('_', ' ', $describe->Field));
-                $this->_fields[$table][$name] = new \stdClass();
-                $this->_fields[$table][$name]->name = $name;
-                $this->_fields[$table][$name]->type = Database::mySqlTypeToPhpType($describe->Type);
-                $this->_fields[$table][$name]->name = lcfirst(str_replace(' ', '', $name));
-            }
-
-            var_dump($this->_fields);
+				foreach($describe as $field) {
+					$name = ucwords(str_replace('_', ' ', $field->Field));
+					$this->_fields[$table][$name] = new \stdClass();
+					$this->_fields[$table][$name]->name  = $name;
+					$this->_fields[$table][$name]->type  = Database::mySqlTypeToPhpType($field->Type);
+					$this->_fields[$table][$name]->field = $field->Field;
+				}
+			}
 
 		}
 
+		public function createAbstract() {
+
+			if(!$this->_fields)
+				$this->getTableFields();
+
+			$config = $this->config;
+			$classname = str_replace(' ', '', ucwords(str_replace('_', ' ', $config->dbSchema))).'Abstract';
+			ob_start();
+			chdir(dirname($_SERVER['SCRIPT_FILENAME']));
+			require 'Templates/AbstractCreator.php';
+			$filedata = ob_get_contents();
+			ob_end_clean();
+			if(!is_dir($config->saveTo))
+				mkdir($config->saveTo, 0775, true);
+			file_put_contents("{$config->saveTo}/$classname.php", $filedata);
+
+		}
+
+		public function createClasses() {
+
+			if(!$this->_fields)
+				$this->getTableFields();
+
+			$config = $this->config;
+
+			foreach($this->_fields as $table => $fields) {
+				$classname = str_replace(' ', '', ucwords(str_replace('_', ' ', $table)));
+				ob_start();
+				chdir(dirname($_SERVER['SCRIPT_FILENAME']));
+				require 'Templates/ClassCreator.php';
+				$filedata = ob_get_contents();
+				ob_end_clean();
+				if(!is_dir($config->saveTo))
+					mkdir($config->saveTo, 0775, true);
+				file_put_contents("{$config->saveTo}/$classname.php", $filedata);
+
+			}
+		}
 
 	}
