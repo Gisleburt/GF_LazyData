@@ -35,6 +35,7 @@
 			$this->config = $config;
 			$this->config->checkConfig();
 			$this->tables = array();
+            $this->_fields = array();
 		}
 		
 		/**
@@ -79,12 +80,12 @@
 				$describes[$table] = $query->fetchAll(\PDO::FETCH_CLASS);
 			}
 
-			foreach($describes as $describe) {
-                $this->_fields[$name] = new \stdClass();
+			foreach($describes as $table => $describe) {
                 $name = ucwords(str_replace('_', ' ', $describe->Field));
-                $this->_fields[$name]->name = $name;
-                $this->_fields[$name]->type = Database::mySqlTypeToPhpType($describe->Type);
-                $this->_fields[$name]->name = lcfirst(str_replace(' ', '', $name));
+                $this->_fields[$table][$name] = new \stdClass();
+                $this->_fields[$table][$name]->name = $name;
+                $this->_fields[$table][$name]->type = Database::mySqlTypeToPhpType($describe->Type);
+                $this->_fields[$table][$name]->name = lcfirst(str_replace(' ', '', $name));
             }
 
             var_dump($this->_fields);

@@ -25,4 +25,4 @@
 	$config->saveLocation = '/home/daniel/test/';
 	
 	$generator = new Generator($config);
-	$generator->getTables();
+	$generator->getTableFields();
