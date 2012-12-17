@@ -17,9 +17,9 @@
 	$config->dbSchema = 'thymely';
 
 	$config->libraryLocation = $libraryDir;
-	$config->vendor = 'Gisleburt';
-	$config->package = 'Thymely';
-	$config->subDirectory = 'LazyData';
+	$config->vendor = 'Thymely';
+	$config->package = 'LazyData';
+	$config->subDirectory = '';
 
 	//
 	// Finally this generates it
