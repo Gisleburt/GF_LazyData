@@ -15,7 +15,7 @@
 		 * eg. 127.0.0.1
 		 * @var string
 		 */
-		public $dbServer;
+		public $dbHost;
 		
 		/**
 		 * Username to log into database
@@ -52,16 +52,16 @@
 		 * @return boolean
 		 */
 		public function checkConfig() {
-			if(!$this->dbServer)
-				throw new Exception('Database server not set.');
-			if(!$this->dbServer)
-				throw new Exception('Database server not set.');
-			if(!$this->dbServer)
-				throw new Exception('Database server not set.');
-			if(!$this->dbServer)
-				throw new Exception('Database server not set.');
-			if(!$this->dbServer)
-				throw new Exception('Database server not set.');
+			if(!$this->dbHost)
+				throw new Exception('Database host not set.');
+			if(!$this->dbUsername)
+				throw new Exception('Database username not set.');
+			if(!$this->dbPassword)
+				throw new Exception('Database password not set.');
+			if(!$this->dbSchema)
+				throw new Exception('Database schema not set.');
+			if(!$this->saveLocation)
+				throw new Exception('Save location not set.');
 			return true;
 		}
 		

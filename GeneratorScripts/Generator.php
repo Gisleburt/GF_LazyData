@@ -34,8 +34,11 @@
 					$this->config->dbSchema
 				);
 		}
-		
-		public function getTables() {
+
+        /**
+         * Get table data
+         */
+        public function getTables() {
 			$bob = $this->_pdo->prepare('SHOW TABLES');
 			var_dump($bob);
 		}
