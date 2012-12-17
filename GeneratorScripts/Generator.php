@@ -28,18 +28,20 @@
 		 */
 		public function getDatabase() {
 			$this->_pdo = Database::getMysqlConncetion(
-					$this->config->dbServer,
+					$this->config->dbHost,
 					$this->config->dbUsername,
 					$this->config->dbPassword,
 					$this->config->dbSchema
 				);
 		}
 
-        /**
-         * Get table data
-         */
-        public function getTables() {
+		/**
+		 * Get table data
+		 */
+		public function getTables() {
+			if(!$this->_pdo)
+				$this->getDatabase();
 			$bob = $this->_pdo->prepare('SHOW TABLES');
-			var_dump($bob);
+			var_dump($bob->execute());
 		}
 	}

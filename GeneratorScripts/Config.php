@@ -1,5 +1,5 @@
 <?php
-
+	
 	namespace Gisleburt\LazyData\GeneratorScripts;
 
 	use Gisleburt\LazyData\Exception;
