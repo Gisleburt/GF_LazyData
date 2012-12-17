@@ -42,6 +42,39 @@
 			
 		}
 
+        public static function mySqlTypeToPhpType($type) {
+            $simpleType = preg_replace('/[\(\[].*/', '', $type);
+
+            switch($simpleType) {
+
+                case 'BIT':
+                case 'INT':
+                case 'TINYINT':
+                case 'SMALLINT':
+                case 'MEDIUMINT':
+                case 'INT':
+                case 'INTEGER':
+                    return 'integer';
+                    break;
+                case 'BIGINT':
+                    return 'long';
+                    break;
+                case 'DECIMAL':
+                case 'DEC':
+                case 'FLOAT':
+                    return 'float';
+                    break;
+                case 'DOUBLE':
+                case 'DOUBLE PRECISION':
+                    return 'double';
+                    break;
+                default:
+                    return 'string';
+            }
+
+            return 'string';
+
+        }
 		
 		/**
 		 * This class can not be instantiated

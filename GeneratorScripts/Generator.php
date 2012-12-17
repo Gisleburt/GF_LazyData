@@ -3,6 +3,7 @@
 	namespace Gisleburt\LazyData\GeneratorScripts;
 	
 	use Gisleburt\LazyData\Database;
+	use Gisleburt\LazyData\Exception;
 
 	class Generator {
 		
@@ -17,10 +18,23 @@
 		 * @var \PDO
 		 */
 		protected $_pdo;
+
+		/**
+		 * Tables in the database.
+		 * @var string[]
+		 */
+		protected $_tables;
+
+        /**
+         * Field information
+         * @var stdClass[]
+         */
+        protected $_fields;
 		
 		public function __construct(Config $config) {
 			$this->config = $config;
 			$this->config->checkConfig();
+			$this->tables = array();
 		}
 		
 		/**
@@ -41,7 +55,41 @@
 		public function getTables() {
 			if(!$this->_pdo)
 				$this->getDatabase();
-			$bob = $this->_pdo->prepare('SHOW TABLES');
-			var_dump($bob->execute());
+
+			$query = $this->_pdo->prepare('SHOW TABLES');
+			if(!$query->execute())
+				throw new Exception("Could not query schema {$this->config->dbSchema} on {$this->config->dbHost}");
+			if(!$results = $query->fetchAll())
+				throw new Exception("Could not get tables from {$this->config->dbSchema} on {$this->config->dbHost}");
+
+			foreach($results as $result) {
+				$this->_tables[] = $result[0];
+			}
 		}
+
+		public function getTableFields() {
+
+			if(!$this->tables)
+				$this->getTables();
+
+			$describes = array();
+			foreach($this->_tables as $table) {
+				$query = $this->_pdo->prepare("DESCRIBE $table;");
+				$query->execute();
+				$describes[$table] = $query->fetchAll(\PDO::FETCH_CLASS);
+			}
+
+			foreach($describes as $describe) {
+                $this->_fields[$name] = new \stdClass();
+                $name = ucwords(str_replace('_', ' ', $describe->Field));
+                $this->_fields[$name]->name = $name;
+                $this->_fields[$name]->type = Database::mySqlTypeToPhpType($describe->Type);
+                $this->_fields[$name]->name = lcfirst(str_replace(' ', '', $name));
+            }
+
+            var_dump($this->_fields);
+
+		}
+
+
 	}
