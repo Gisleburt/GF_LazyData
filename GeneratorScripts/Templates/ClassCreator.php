@@ -12,7 +12,7 @@
 		 * <?=$field->name?> 
 		 * @var <?=$field->type?> 
 		 */
-		public <?=$field->field?>;
+		public $<?=$field->field?>;
 
 		<?php } ?>
 
