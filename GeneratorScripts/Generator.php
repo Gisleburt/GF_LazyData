@@ -119,6 +119,7 @@
 
 			foreach($this->_fields as $table => $fields) {
 				$classname = str_replace(' ', '', ucwords(str_replace('_', ' ', $table)));
+				$classname = rtrim($classname, 's');
 				ob_start();
 				chdir(dirname($_SERVER['SCRIPT_FILENAME']));
 				require 'Templates/ClassCreator.php';
