@@ -326,30 +326,34 @@
 		 * @param bool forceLoad Ignore safe delete and load it if it exists
 		 */
 		public function loadWhere($where, $count = 1, $offset = 0, $order = null, $forceLoad = false) {
+			/* @var $statement \PDOStatement */
 			$this->clearValues();
 			if($this->_safeDelete && !$forceLoad)
-				$where = "($where) AND date_deleted = 0";
+				$where = "($where) AND {$this->getSafeDeleteField()} = 0";
 			if(!$order)
 				$order = $this->_order;
 			$query = "SELECT $this->_fieldsString FROM $this->_table WHERE $where ORDER BY $order LIMIT $offset,$count";
 			$statement = $this->_pdo->prepare($query);
 			$statement->execute();
-			if($row=$statement->fetch(\PDO::FETCH_ASSOC))
+			var_dump($statement);
+			if($row=$statement->fetch(\PDO::FETCH_ASSOC)) {
+
 				$this->setValues($row, false);
+			}
 		}
 		
 		/**
 		 * Inserts data into database
 		 */
 		public function insert() {
+			/* @var $statement \PDOStatement */
 			$this->setDateCreated();
-			$values = $this->getValues();
 			$query = "INSERT INTO {$this->_table} ($this->_fieldsString) VALUES($this->_valuesString)";
 			$statement = $this->_pdo->prepare($query);
 			$fields = $this->_descriptionManager->getTableDescription();
 			foreach($fields as $field => $type) {
 				$value = $this->$field;
-				$statement->bindParam($field, $value);
+				$statement->bindValue(":$field", $value);
 			}
 			$statement->execute();
 			$this->{$this->_primaryKey} = $this->_pdo->lastInsertId();
@@ -359,13 +363,14 @@
 		 * Updates the current entry in the database
 		 */
 		public function update() {
+			/* @var $statement \PDOStatement */
 			$this->setDateModified();
-			$values = $this->getValues();
 			$query = "UPDATE {$this->_table} SET $this->_updateString WHERE $this->_primaryKey = ".(int)$this->getPrimaryKey();
 			$statement = $this->_pdo->prepare($query);
 			$fields = $this->_descriptionManager->getTableDescription();
 			foreach($fields as $field => $type) {
-				$statement->bindParam($field, $this->$field);
+				$value = $this->$field;
+				$statement->bindValue(":$field", $value);
 			}
 			$statement->execute();
 		}
@@ -540,7 +545,7 @@
 			$statement = $pdo->prepare("SELECT {$manager->getFieldsString()} FROM {$manager->getTable()} WHERE $where ORDER BY $order $limit");
 			$statement->execute();
 			while($data = $statement->fetchObject(get_called_class())) {
-				if(!($data->_safeDelete && $row[$data->getSafeDeleteField()] > 0)) {
+				if(!($data->_safeDelete && $data->getSafeDeleteValue() > 0)) {
 					$datas[] = $data;
 				}
 			}
@@ -648,7 +653,7 @@
 		}
 		
 		/**
-		 * Returns the date created
+		 * Returns the date created field name
 		 * @return  string
 		 */
 		public function getSafeCreateField() {
@@ -656,7 +661,7 @@
 		}
 		
 		/**
-		 * Returns the date last modified
+		 * Returns the date last modified field name
 		 * @return  string
 		 */
 		public function getSafeModifyField() {
@@ -664,11 +669,35 @@
 		}
 		
 		/**
-		 * Returns the date deleted
+		 * Returns the date deleted field name
 		 * @return  string
 		 */
 		public function getSafeDeleteField() {
 			return array_search('_safeDelete', $this->_specialFields);
+		}
+
+		/**
+		 * Returns the date created
+		 * @return  string
+		 */
+		public function getSafeCreateValue() {
+			return $this->{$this->getSafeCreateField()};
+		}
+
+		/**
+		 * Returns the date last modified
+		 * @return  string
+		 */
+		public function getSafeModifyValue() {
+			return $this->{$this->getSafeModifyField()};
+		}
+
+		/**
+		 * Returns the date deleted
+		 * @return  string
+		 */
+		public function getSafeDeleteValue() {
+			return $this->{$this->getSafeDeleteField()};
 		}
 		
 		/**
