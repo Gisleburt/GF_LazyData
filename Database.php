@@ -75,6 +75,44 @@
             return 'string';
 
         }
+
+		public static function mySqlTypeToPdoType($type) {
+
+			$simpleType = strtoupper(preg_replace('/[\(\[].*/', '', $type));
+
+			switch($simpleType) {
+
+				case 'BIT':
+				case 'INT':
+				case 'TINYINT':
+				case 'SMALLINT':
+				case 'MEDIUMINT':
+				case 'INT':
+				case 'INTEGER':
+				case 'BIGINT':
+					return \PDO::PARAM_INT;
+					break;
+				case 'TINYBLOB':
+				case 'MEDIUMBLOB':
+				case 'BLOB':
+				case 'LONGBLOB':
+				case 'TINYTEXT':
+				case 'MEDIUMTEXT':
+				case 'TEXT':
+				case 'LONGTEXT':
+					return \PDO::PARAM_LOB;
+					break;
+				case 'DECIMAL':
+				case 'DEC':
+				case 'FLOAT':
+				case 'DOUBLE':
+				case 'DOUBLE PRECISION':
+				default:
+					return \PDO::PARAM_STR;;
+
+			}
+
+		}
 		
 		/**
 		 * This class can not be instantiated
