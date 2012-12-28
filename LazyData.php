@@ -245,7 +245,7 @@
 			$fieldInfo = $this->_descriptionManager->getTableDescription();
 			
 			if(empty($fieldInfo))
-				throw new Exception("No fields were found in this LiteTable: $this->__class__", Exception::MESSAGE_BADCODE);
+				throw new Exception("No fields were found in this LazyData Table: $this->__class__", Exception::MESSAGE_BADCODE);
 			
 			// Extract information about the table, whats its primary key, do we know of any special fields 
 			foreach($fieldInfo as $field => $info) {
@@ -310,8 +310,10 @@
 		 * @param string $value
 		 */
 		public function loadBy($field, $value) {
-			if($this->checkField($field))
+			if($this->checkField($field)) {
+				$value = $this->_pdo->quote($value);
 				$this->loadWhere("$field = $value");
+			}
 		}
 		
 		/**
@@ -506,9 +508,10 @@
 		 */
 		public static function getDataBy($field, $value, $count = null, $offset = 0, $order = null) {
 			$manager = new static();
-			// TODO: Make this function get the object without going to getDataWhere
-			if($manager->checkField($field))
+			if($manager->checkField($field)) {
+				$value = $manager->getPDO()->quote($value);
 				return static::getDataWhere("$field = $value", $count, $offset, $order);
+			}
 		}
 		
 		/**
