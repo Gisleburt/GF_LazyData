@@ -6,6 +6,13 @@
 	 * LazyData class
 	 */
 	class <?=$classname?> extends <?=$abstractName?> {
+	
+		/**
+		 * The table this LazyData object represents
+		 * @var string
+		 */
+		protected $_table = '<?=$table?>';
+	
 		<?php foreach($fields as $field) { ?>
 
 		/**
