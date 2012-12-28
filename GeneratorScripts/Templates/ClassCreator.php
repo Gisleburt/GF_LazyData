@@ -1,11 +1,11 @@
 <?='<?php'?> 
 
-	use <?=$config->namespace?>;
+	namespace <?=$config->namespace?>;
 
 	/**
 	 * LazyData class
 	 */
-	class <?=$classname?> extends <?=$config->dbSchema?>Abstract {
+	class <?=$classname?> extends <?=$abstractName?> {
 		<?php foreach($fields as $field) { ?>
 
 		/**

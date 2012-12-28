@@ -98,7 +98,7 @@
 				$this->getTableFields();
 
 			$config = $this->config;
-			$classname = str_replace(' ', '', ucwords(str_replace('_', ' ', $config->dbSchema))).'Abstract';
+			$classname = $this->abstractName();
 			ob_start();
 			chdir(dirname($_SERVER['SCRIPT_FILENAME']));
 			require 'Templates/AbstractCreator.php';
@@ -116,6 +116,7 @@
 				$this->getTableFields();
 
 			$config = $this->config;
+			$abstractName = $this->abstractName();
 
 			foreach($this->_fields as $table => $fields) {
 				$classname = str_replace(' ', '', ucwords(str_replace('_', ' ', $table)));
@@ -130,6 +131,10 @@
 				file_put_contents("{$config->saveTo}/$classname.php", $filedata);
 
 			}
+		}
+
+		public function abstractName() {
+			return str_replace(' ', '', ucwords(str_replace('_', ' ', $this->config->dbSchema))).'Abstract';
 		}
 
 	}
