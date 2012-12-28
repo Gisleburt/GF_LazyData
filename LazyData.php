@@ -335,9 +335,7 @@
 			$query = "SELECT $this->_fieldsString FROM $this->_table WHERE $where ORDER BY $order LIMIT $offset,$count";
 			$statement = $this->_pdo->prepare($query);
 			$statement->execute();
-			var_dump($statement);
 			if($row=$statement->fetch(\PDO::FETCH_ASSOC)) {
-
 				$this->setValues($row, false);
 			}
 		}
@@ -353,10 +351,16 @@
 			$fields = $this->_descriptionManager->getTableDescription();
 			foreach($fields as $field => $type) {
 				$value = $this->$field;
-				$statement->bindValue(":$field", $value);
+				if(is_null($value) && $type->Null == 'NO')
+					$value = self::notNullDefault($type->Type);
+				$statement->bindValue(":$field", $value, Database::mySqlTypeToPdoType($type->Type));
 			}
 			$statement->execute();
 			$this->{$this->_primaryKey} = $this->_pdo->lastInsertId();
+			if($statement->errorCode() > 0) {
+				$error = $statement->errorInfo();
+				throw new Exception("Error inserting data: $error[2]");
+			}
 		}
 		
 		/**
@@ -370,7 +374,9 @@
 			$fields = $this->_descriptionManager->getTableDescription();
 			foreach($fields as $field => $type) {
 				$value = $this->$field;
-				$statement->bindValue(":$field", $value);
+				if(is_null($value) && $type->Null == 'NO')
+					$value = self::notNullDefault($type->Type);
+				$statement->bindValue(":$field", $value, Database::mySqlTypeToPdoType($type->Type));
 			}
 			$statement->execute();
 		}
@@ -740,6 +746,25 @@
 				}
 				$this->$fieldName = null;
 			}
+		}
+
+		/**
+		 * Returns an acceptable not null default value for a given type
+		 * @param $mySqlType
+		 * @return string
+		 */
+		public function notNullDefault($mySqlType) {
+			$phpType = Database::mySqlTypeToPhpType($mySqlType);
+			switch($phpType) {
+				case 'integer';
+				case 'long';
+				case 'float';
+				case 'double';
+					return '0';
+				case 'string';
+					return '';
+			}
+			return '';
 		}
 		
 	}
