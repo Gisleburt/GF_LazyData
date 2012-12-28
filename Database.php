@@ -43,7 +43,7 @@
 		}
 
         public static function mySqlTypeToPhpType($type) {
-            $simpleType = strtoupper(preg_replace('/[\(\[].*/', '', $type));
+            $simpleType = self::simpleMySqlType($type);
 
             switch($simpleType) {
 
@@ -65,7 +65,6 @@
                     return 'float';
                     break;
                 case 'DOUBLE':
-                case 'DOUBLE PRECISION':
                     return 'double';
                     break;
                 default:
@@ -78,7 +77,7 @@
 
 		public static function mySqlTypeToPdoType($type) {
 
-			$simpleType = strtoupper(preg_replace('/[\(\[].*/', '', $type));
+			$simpleType = self::simpleMySqlType($type);
 
 			switch($simpleType) {
 
@@ -106,12 +105,15 @@
 				case 'DEC':
 				case 'FLOAT':
 				case 'DOUBLE':
-				case 'DOUBLE PRECISION':
 				default:
 					return \PDO::PARAM_STR;;
-
 			}
+			return \PDO::PARAM_STR;;
 
+		}
+
+		public static function simpleMySqlType($type) {
+			return strtoupper(preg_replace('/[\ \(\[].*/', '', $type));
 		}
 		
 		/**
