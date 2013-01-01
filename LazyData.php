@@ -310,10 +310,14 @@
 		 * @param string $value
 		 */
 		public function loadBy($field, $value) {
+			$this->clearValues();
 			if($this->checkField($field)) {
 				$value = $this->_pdo->quote($value);
 				$this->loadWhere("$field = $value");
+				if($this->getPrimaryKey())
+					return true;
 			}
+			return false;
 		}
 		
 		/**
