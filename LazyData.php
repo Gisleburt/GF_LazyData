@@ -525,7 +525,7 @@
 			$manager = new static();
 			if($manager->checkField($field)) {
 				$value = $manager->getPDO()->quote($value);
-				return static::getDataWhere("$field = $value", $count, $offset, $order);
+				return static::getWhere("$field = $value", $count, $offset, $order);
 			}
 		}
 		
