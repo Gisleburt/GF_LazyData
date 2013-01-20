@@ -42,38 +42,38 @@
 			
 		}
 
-        public static function mySqlTypeToPhpType($type) {
-            $simpleType = self::simpleMySqlType($type);
+		public static function mySqlTypeToPhpType($type) {
+			$simpleType = self::simpleMySqlType($type);
 
-            switch($simpleType) {
+			switch($simpleType) {
 
-                case 'BIT':
-                case 'INT':
-                case 'TINYINT':
-                case 'SMALLINT':
-                case 'MEDIUMINT':
-                case 'INT':
-                case 'INTEGER':
-                    return 'integer';
-                    break;
-                case 'BIGINT':
-                    return 'long';
-                    break;
-                case 'DECIMAL':
-                case 'DEC':
-                case 'FLOAT':
-                    return 'float';
-                    break;
-                case 'DOUBLE':
-                    return 'double';
-                    break;
-                default:
-                    return 'string';
-            }
+				case 'BIT':
+				case 'INT':
+				case 'TINYINT':
+				case 'SMALLINT':
+				case 'MEDIUMINT':
+				case 'INT':
+				case 'INTEGER':
+					return 'integer';
+					break;
+				case 'BIGINT':
+					return 'long';
+					break;
+				case 'DECIMAL':
+				case 'DEC':
+				case 'FLOAT':
+					return 'float';
+					break;
+				case 'DOUBLE':
+					return 'double';
+					break;
+				default:
+					return 'string';
+			}
 
-            return 'string';
+			return 'string';
 
-        }
+		}
 
 		public static function mySqlTypeToPdoType($type) {
 
