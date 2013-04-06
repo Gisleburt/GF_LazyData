@@ -56,7 +56,7 @@
 		
 		/**
 		 * An array of relationships to other LazyData classes
-		 * @var unknown_type
+		 * @var string
 		 */
 		protected $_relationships = array();
 		
@@ -72,7 +72,7 @@
 		
 		/**
 		 * Database connection
-		 * @var PDO
+		 * @var \PDO
 		 */
 		protected $_pdo;
 		
@@ -303,11 +303,12 @@
 			$id = (int)$id; // Quick cleanse			
 			$this->loadBy($this->_primaryKey, $id);
 		}
-		
+
 		/**
 		 * Loads data based on the value of a field
-		 * @param string $field
-		 * @param string $value
+		 * @param $field string
+		 * @param $value mixed
+		 * @return bool
 		 */
 		public function loadBy($field, $value) {
 			$this->clearValues();
@@ -327,7 +328,7 @@
 		 * @param int $count Load this many
 		 * @param int $offset Skip this many
 		 * @param string $order Order strin
-		 * @param bool forceLoad Ignore safe delete and load it if it exists
+		 * @param bool $forceLoad Ignore safe delete and load it if it exists
 		 */
 		public function loadWhere($where, $count = 1, $offset = 0, $order = null, $forceLoad = false) {
 			/* @var $statement \PDOStatement */
@@ -394,19 +395,20 @@
 			else
 				$this->insert();
 		}
-		
-		
+
+
 		/**
 		 * Sets field values from an associative array. Will not set fields starting with _
 		 * @param array $values
+		 * @param bool $safe
 		 */
 		public function setValues(array $values, $safe = true) {
 			$this->clearValues();
 			foreach($values as $field=>$value) {
 				if((substr($field, 0, 1) != '_')) {
-					if($safe)
-						$this->$field = $this->_pdo->quote($value);
-					else
+					//if($safe)
+					//	$this->$field = $this->_pdo->quote($value);
+					//else
 						$this->$field = $value;
 				}
 			}
@@ -451,12 +453,12 @@
 		 * @return array $fields
 		 */
 		public function checkFields(array $fields) {
-			$returnFields = array();
+			$returnFields = ($fields); // Dereference
 			$allowedFields = $this->_descriptionManager->getTableDescription();
-			foreach($fields as $key => $field)
+			foreach($returnFields as $key => $field)
 				if(!in_array($field, $allowedFields))
-					unset($fields[$key]);
-			return $fields;
+					unset($returnFields[$key]);
+			return $returnFields;
 		}
 		
 		/**
@@ -479,14 +481,14 @@
 		
 		/**
 		 * Get a reference to the PDO object for this table
-		 * @return PDO
+		 * @return \PDO
 		 */
 		public function getPDO() {
 			return $this->_pdo;
 		}
 		
 		/**
-		 * Returns the tablename
+		 * Returns the table name
 		 * @return string
 		 */
 		public function getTable() {
