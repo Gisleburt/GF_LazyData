@@ -416,7 +416,7 @@
 		
 		/**
 		 * Returns an associative array of the current values (but not ones begining with _)
-		 * @param bool all Return all values, not just the ones relevant to the table
+		 * @param bool $all Return all values, not just the ones relevant to the table
 		 */
 		public function getValues($all = null) {
 			$values = array();
@@ -542,6 +542,7 @@
 		 */
 		public static function getWhere($where, $count = null, $offset = 0, $order = null) {
 			$datas = array();
+			/** @var $manager LazyData */
 			$manager = new static();
 			$pdo = $manager->getPDO();
 			
