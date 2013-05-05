@@ -2,7 +2,7 @@
     "name": "gisleburt/lazydata",
     "type": "library",
     "description": "Super Simple ORM for PHP 5.3",
-    "keywords": ["orm","database",""],
+    "keywords": ["orm","database"],
     "homepage": "http://github.com/gisleburt/lazydata",
     "license": "MIT",
 	"minimum-stability": "dev",
