@@ -52,7 +52,6 @@
 				case 'TINYINT':
 				case 'SMALLINT':
 				case 'MEDIUMINT':
-				case 'INT':
 				case 'INTEGER':
 					return 'integer';
 					break;
@@ -67,8 +66,6 @@
 				case 'DOUBLE':
 					return 'double';
 					break;
-				default:
-					return 'string';
 			}
 
 			return 'string';
@@ -86,7 +83,6 @@
 				case 'TINYINT':
 				case 'SMALLINT':
 				case 'MEDIUMINT':
-				case 'INT':
 				case 'INTEGER':
 				case 'BIGINT':
 					return \PDO::PARAM_INT;
@@ -105,10 +101,9 @@
 				case 'DEC':
 				case 'FLOAT':
 				case 'DOUBLE':
-				default:
-					return \PDO::PARAM_STR;;
+					return \PDO::PARAM_STR;
 			}
-			return \PDO::PARAM_STR;;
+			return \PDO::PARAM_STR;
 
 		}
 

@@ -147,10 +147,11 @@
 		//
 		// Methods
 		//
-		
+
 		/**
 		 * Create an empty object, or loads one by id.
-		 * @param int $id
+		 * @param integer|null $id
+		 * @throws \Exception
 		 */
 		public function __construct($id = null) {
 			
@@ -164,7 +165,7 @@
 				$this->_descriptionManagerClass = __NAMESPACE__.'\DescriptionManager_Static';
 			$this->_descriptionManager = new $this->_descriptionManagerClass($this->__class__);
 			if(!$this->_descriptionManager instanceof DescriptionManager)
-				throw new Exception('Description management object must be an instance of DescriptionManager');
+				throw new \Exception('Description management object must be an instance of DescriptionManager');
 			
 			// Get field names
 			$this->_setFields();
@@ -184,7 +185,12 @@
 				$this->load($id);
 			
 		}
-		
+
+		/**
+		 * Magic function used to enable relationship
+		 * @param $field
+		 * @return null
+		 */
 		public function __get($field) {
 			if($field[0] != '_') {
 				if(isset($this->$field)) {
@@ -197,6 +203,7 @@
 					return $this->$field = $this->_relationships[$field]->loadMany($this->{$this->_relationships[$field]->fieldFrom});
 				}
 			}
+			return null;
 		}
 		
 		
@@ -521,7 +528,7 @@
 		 * @param int $count
 		 * @param int $offset
 		 * @param string $order
-		 * @return array
+		 * @return array|null
 		 */
 		public static function getBy($field, $value, $count = null, $offset = 0, $order = null) {
 			$manager = new static();
@@ -529,6 +536,7 @@
 				$value = $manager->getPDO()->quote($value);
 				return static::getWhere("$field = $value", $count, $offset, $order);
 			}
+			return null;
 		}
 		
 		/**

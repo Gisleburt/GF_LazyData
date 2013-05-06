@@ -1,14 +1,14 @@
 {
     "name": "gisleburt/lazydata",
     "type": "library",
-    "description": "Super Simple ORM for PHP 5.3",
+    "description": "Gisleburt Framework: LazyData ORM module",
     "keywords": ["orm","database"],
-    "homepage": "http://github.com/gisleburt/lazydata",
+    "homepage": "http://github.com/Gisleburt",
     "license": "MIT",
 	"minimum-stability": "dev",
     "authors": [
         {
-            "name": "Daniel Masn",
+            "name": "Daniel Mason",
             "email": "daniel@danielmason.com",
             "homepage": "http://danielmason.com",
             "role": "Developer"

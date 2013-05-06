@@ -2,7 +2,7 @@
 
 	//
 	// This bit loads the autoloader. You may wish to use a different PSR-0
-	// autoloader in wich case just replace this section.
+	// autoloader in which case just replace this section.
 	//
 
 	$libraryDir = __DIR__.'/../../..';

@@ -69,6 +69,7 @@
 		public function getFieldDescription($fieldName) {
 			if(isset(static::$descriptions[$this->namespace][$fieldName]))
 				return static::$descriptions[$this->namespace][$fieldName];
+			return null;
 		}
 		
 		/**

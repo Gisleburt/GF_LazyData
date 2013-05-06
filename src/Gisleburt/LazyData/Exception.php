@@ -20,12 +20,12 @@
 		 * @var string
 		 */
 		protected $publicMessage;
-		
+
 		/**
 		 * Create a new Exception
-		 * @param string $message What happened?
-		 * @param string $public What to tell the user?
-		 * @param Exception $previous What exception causes this one?
+		 * @param string $message
+		 * @param string|null $publicMessage
+		 * @param Exception $previous
 		 */
 		public function __construct($message, $publicMessage = null, Exception $previous = null) {
 			

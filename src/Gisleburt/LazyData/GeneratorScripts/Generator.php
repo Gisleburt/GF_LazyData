@@ -98,7 +98,7 @@
 				$this->getTableFields();
 
 			$config = $this->config;
-			$classname = $this->abstractName();
+			$className = $this->abstractName();
 			ob_start();
 			chdir(dirname($_SERVER['SCRIPT_FILENAME']));
 			require 'Templates/AbstractCreator.php';
@@ -106,7 +106,7 @@
 			ob_end_clean();
 			if(!is_dir($config->saveTo))
 				mkdir($config->saveTo, 0775, true);
-			file_put_contents("{$config->saveTo}/$classname.php", $filedata);
+			file_put_contents("{$config->saveTo}/$className.php", $filedata);
 
 		}
 
@@ -116,7 +116,7 @@
 				$this->getTableFields();
 
 			$config = $this->config;
-			$abstractName = $this->abstractName();
+			//$abstractName = $this->abstractName();
 
 			foreach($this->_fields as $table => $fields) {
 				$classname = str_replace(' ', '', ucwords(str_replace('_', ' ', $table)));
